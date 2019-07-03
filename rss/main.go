@@ -1,8 +1,6 @@
 package rss
 
 import (
-	"fmt"
-
 	"fyne.io/fyne"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/theme"
@@ -11,14 +9,16 @@ import (
 	"github.com/fyne-io/examples/img/icon"
 )
 
-type textEdit struct {
-	cursorRow, cursorCol *widget.Label
-	entry                *widget.Entry
+func setLocationHome(tl *ToolbarLabel) {
+	tl.SetText("Feed List")
 }
 
-func (e *textEdit) updateStatus() {
-	e.cursorRow.SetText(fmt.Sprintf("%d", e.entry.CursorRow+1))
-	e.cursorCol.SetText(fmt.Sprintf("%d", e.entry.CursorColumn+1))
+func setLocationNewFeed(tl *ToolbarLabel) {
+	tl.SetText("Add new item")
+}
+
+func setLocationFeedList(tl *ToolbarLabel, feedName string) {
+	tl.SetText(feedName)
 }
 
 // Show loads a new RSS reader
@@ -26,41 +26,33 @@ func Show(app fyne.App) {
 	window := app.NewWindow("RSS Reader")
 	window.SetIcon(icon.TextEditorBitmap) // FIXME - icon
 
-	entry := widget.NewMultiLineEntry()
-	toolbar := widget.NewToolbar(widget.NewToolbarAction(theme.DocumentCreateIcon(), func() {
-		entry.SetText("")
-	}),
+	location := NewToolbarLabel(" <-- Please add new RSS/Atom feed by clicking on (+) icon")
+	// setLocationHome(location) // can't be here immediately after creation of ToolbarLabel
+
+	toolbar := widget.NewToolbar(
+		widget.NewToolbarAction(theme.HomeIcon(), func() {
+			setLocationHome(location)
+        }),
+		widget.NewToolbarAction(theme.ContentAddIcon(), func() {
+			setLocationNewFeed(location)
+		}),
 		widget.NewToolbarSeparator(),
-		widget.NewToolbarAction(theme.ContentCutIcon(), func() {
-			entry.TypedShortcut(&fyne.ShortcutCut{Clipboard: window.Clipboard()})
-		}),
-		widget.NewToolbarAction(theme.ContentCopyIcon(), func() {
-			entry.TypedShortcut(&fyne.ShortcutCopy{Clipboard: window.Clipboard()})
-		}),
-		widget.NewToolbarAction(theme.ContentPasteIcon(), func() {
-			entry.TypedShortcut(&fyne.ShortcutPaste{Clipboard: window.Clipboard()})
-		}))
+		location,
+	)
 
-	cursorRow := widget.NewLabel("1")
-	cursorCol := widget.NewLabel("1")
 
-	status := widget.NewHBox(layout.NewSpacer(),
-		widget.NewLabel("Cursor Row:"), cursorRow,
-		widget.NewLabel("Col:"), cursorCol)
-	content := fyne.NewContainerWithLayout(layout.NewBorderLayout(toolbar, status, nil, nil),
-		toolbar, status, widget.NewScrollContainer(entry))
+	status := widget.NewHBox( //layout.NewSpacer(),
+		widget.NewLabel("Bottom bar"))
+
+	content := fyne.NewContainerWithLayout(
+		layout.NewBorderLayout(toolbar, status, nil, nil),
+		toolbar,
+		status,
+		widget.NewScrollContainer(widget.NewButtonWithIcon("", theme.WarningIcon(), func() {}) ),
+	)
 
 	window.SetContent(content)
 	window.Resize(fyne.NewSize(480, 320))
-
-	editor := &textEdit{
-		cursorRow: cursorRow,
-		cursorCol: cursorCol,
-		entry:     entry,
-	}
-	editor.entry.OnCursorChanged = func() {
-		editor.updateStatus()
-	}
 
 	window.Show()
 }
